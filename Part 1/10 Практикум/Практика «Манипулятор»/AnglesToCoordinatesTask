@@ -1,0 +1,44 @@
+using NUnit.Framework;
+using System;
+using System.Drawing;
+
+namespace Manipulation
+{
+    public static class AnglesToCoordinatesTask
+    {
+        public static PointF[] GetJointPositions(double shoulder, double elbow, double wrist)
+        {
+            double angle2, angle3;
+            angle2 = (elbow + shoulder + Math.PI);
+            angle3 = (elbow + shoulder + wrist + 2 * Math.PI);
+            var elbowPos = new PointF((float)(Manipulator.UpperArm * Math.Cos(shoulder)), (float)(Manipulator.UpperArm * Math.Sin(shoulder)));
+            var wristPos = new PointF((float)(Manipulator.Forearm * Math.Cos(angle2)) + elbowPos.X, (float)(Manipulator.Forearm * Math.Sin(angle2)) + elbowPos.Y);
+            var palmEndPos = new PointF((float)(Manipulator.Palm * Math.Cos(angle3)) + wristPos.X, (float)(Manipulator.Palm * Math.Sin(angle3)) + wristPos.Y);
+            return new PointF[]
+            {
+                elbowPos,
+                wristPos,
+                palmEndPos
+            };
+        }
+    }
+    [TestFixture]
+    public class AnglesToCoordinatesTask_Tests
+    {
+        [Test]
+
+        [TestCase(Math.PI / 2, Math.PI, Math.PI, 0, Manipulator.UpperArm + Manipulator.Forearm + Manipulator.Palm)]
+        [TestCase(Math.PI / 2, Math.PI / 2, Math.PI, Manipulator.Forearm + Manipulator.Palm, Manipulator.UpperArm)]
+        [TestCase(0, Math.PI, Math.PI, Manipulator.UpperArm + Manipulator.Forearm + Manipulator.Palm, 0)]
+        [TestCase(Math.PI, Math.PI, Math.PI, -(Manipulator.UpperArm + Manipulator.Forearm + Manipulator.Palm), 0)]
+        [TestCase(Math.PI, Math.PI / 2, 3 * Math.PI / 2, -(Manipulator.UpperArm + Manipulator.Palm), Manipulator.Forearm)]
+        [TestCase(Math.PI / 2, 0, 0, 0, (Manipulator.UpperArm - Manipulator.Forearm + Manipulator.Palm))]
+
+        public void TestGetJointPositions(double shoulder, double elbow, double wrist, double palmEndX, double palmEndY)
+        {
+            var joints = AnglesToCoordinatesTask.GetJointPositions(shoulder, elbow, wrist);
+            Assert.AreEqual(palmEndX, joints[2].X, 1e-5, "palm endX");
+            Assert.AreEqual(palmEndY, joints[2].Y, 1e-5, "palm endY");
+        }
+    }
+}
